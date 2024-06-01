@@ -5,6 +5,8 @@ import sys
 import configparser
 import queue
 import time
+from datetime import datetime
+import socket
 
 import cv2
 from PyQt5.QtCore import Qt, QTimer
@@ -43,6 +45,8 @@ class MainGUI(QMainWindow):
         self.init_basic_instance()
         print(2)
         self.init_ui()
+        self.lane_logstash_host = "127.0.0.1"
+        self.lane_logstash_port = "9901"
 
     def init_basic_instance(self):
         """프로그램 동작에 필요한 기본 인스턴스를 초기화 합니다."""
@@ -171,6 +175,10 @@ class MainGUI(QMainWindow):
 
             self.frame_refresh_timer.start(30)  # 30ms 마다 콜백 실행 (33 fps)
             self.activated = self.launch_control.activate()
+
+            if self.activated == True:
+                self.lane_start_time = datetime.now().isoformat()
+
         except Exception as e:
             print_err(f"Failed to activate {str_lane_num}")
             self.deactivate_lane(str_lane_num)
@@ -210,6 +218,14 @@ class MainGUI(QMainWindow):
                 self.frame_queue.queue.clear()
 
             self.activated = False
+
+            if self.activated == False:
+                self.lane_stop_time = datetime.now()
+                log_entry = self.create_log_message(self.lane_start_time,self.lane_stop_time,str_lane_num)
+                self.send_log_to_logstash(log_entry)
+
+
+
         except Exception as e:
             print_err(f"Failed to deactivate {str_lane_num}")
 
@@ -390,3 +406,31 @@ class MainGUI(QMainWindow):
         self.audio_recv_thread.terminate()
         self.audio_recv_thread.wait()
         event.accept()
+
+    def send_log_to_logstash(self,log_entry):
+        try:
+            # Logstash TCP 소켓 연결
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            sock.connect((self.lane_logstash_host, self.lanelogstash_port))
+
+            # 로그 전송
+            sock.sendall(log_entry.encode('utf-8'))
+            sock.close()
+
+        except Exception as e:
+            print(f"Error while sending log to Logstash: {e}")
+
+    def create_log_message(self,timestamp_start,timestamp_stop,lane_num):
+        timestamp = timestamp_stop.date()
+
+        timestamp = datetime.combine(timestamp,datetime.min.time()).isoformat()
+
+        logger_name = lane_num+'_UPTIME_LOG'
+        level = 'INFO'
+        start_time = timestamp_start.isoformat()
+        stop_time = timestamp_stop.isoformat()
+        up_time = (timestamp_stop - timestamp_start).seconds
+
+        log_entry = f'TIME:{timestamp}  NAME:{logger_name}  LEVEL:{level}  START:{start_time}  STOP:{stop_time}  UPTIME:{up_time}'
+
+        return log_entry
