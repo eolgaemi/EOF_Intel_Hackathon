@@ -8,6 +8,9 @@ import time
 from datetime import datetime
 import socket
 
+import pygame
+from gtts import gTTS
+
 import cv2
 from PyQt5.QtCore import Qt, QTimer
 from PyQt5.QtGui import QPixmap, QImage
@@ -313,23 +316,27 @@ class MainGUI(QMainWindow):
             self.classifier.set_model_target("glass")
             added_text = f"모델 변경: 페트병->유리병 {hour}시 {minute}분 {second}초"
             self.update_log_text(added_text)
+            self.speak("유리병 분류 모델로 변경합니다.")
         elif self.detector.current_target == "glass" \
                 and self.classifier.current_target == "glass":
             self.detector.set_model_target("pet")
             self.classifier.set_model_target("pet")
             added_text = f"모델 변경: 유리병->페트병 {hour}시 {minute}분 {second}초"
             self.update_log_text(added_text)
+            self.speak("페트병 분류 모델로 변경합니다.")
 
         print(f"현재 detector의 target = {self.detector.current_target}")
         print(f"현재 classifier target = {self.classifier.current_target}")
 
-        self.hw_control_comm.send(f"{self.detector.current_target}")
+        # self.hw_control_comm.send(f"{self.detector.current_target}")
         self.on_change_model = False
+        
 
     def send_llama_output(self, message):
         """llama2의 추론 결과를 클라이언트로 전송합니다."""
-        print("text를 클라이언트로 전송합니다.")
-        self.hw_control_comm.send(f'@{message}')
+        # print("text를 클라이언트로 전송합니다.")
+        # self.hw_control_comm.send(f'@{message}')
+        self.speak(message)
 
     def start_lane(self):
         """라인을 가동합니다."""
@@ -407,6 +414,7 @@ class MainGUI(QMainWindow):
         self.audio_recv_thread.wait()
         event.accept()
 
+<<<<<<< HEAD
     def send_log_to_logstash(self,log_entry):
         try:
             # Logstash TCP 소켓 연결
@@ -434,3 +442,16 @@ class MainGUI(QMainWindow):
         log_entry = f'TIME:{timestamp}  NAME:{logger_name}  LEVEL:{level}  START:{start_time}  STOP:{stop_time}  UPTIME:{up_time}'
 
         return log_entry
+=======
+    def speak(self, text):
+        """서버로부터 받은 문자열을 TTS하여 스피커로 출력합니다."""
+        # print("받은 문자", text)
+        tts = gTTS(text=text, lang="ko")
+        tts.save("resources/text_to_speech.mp3")
+
+        pygame.mixer.init()
+        pygame.mixer.music.load("resources/text_to_speech.mp3")
+        pygame.mixer.music.play()
+        while pygame.mixer.music.get_busy():
+            pygame.time.Clock().tick(10)
+>>>>>>> 42dedaf (bug fix: 녹음 후 통신소켓 죽는문제)

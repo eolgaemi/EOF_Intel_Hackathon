@@ -2,7 +2,7 @@
 EOF_DESKTOP/.desktop_venv/
 EOF_RaspberryPi4/.rp4_venv/
 EOF_DESKTOP/resources/api_tokens.ini
-EOF_DESKTOP/resources/received_audio.wav
+EOF_DESKTOP/resources/recorded_audio.wav
 EOF_DESKTOP/resources/text_to_speech.mp3
 EOF_DESKTOP/resources/bge-large-en-v1.5/
 EOF_DESKTOP/resources/Llama-2-7b-hf/

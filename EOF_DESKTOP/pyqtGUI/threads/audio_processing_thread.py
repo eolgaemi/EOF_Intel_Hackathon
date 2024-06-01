@@ -2,8 +2,6 @@
 오디오 파일을 전처리 하는 모듈입니다.
 """
 from PyQt5.QtCore import QThread, pyqtSignal
-import pygame
-from gtts import gTTS
 
 
 class AudioProcessing(QThread):
@@ -41,19 +39,6 @@ class AudioProcessing(QThread):
             answer = self.voice_inferencer.get_llama2_answer(stt)
             print("Llama answer:", answer)
             self.message_signal.emit(answer)
-            self.speak(answer)
-        
-    def speak(self, text):
-        """서버로부터 받은 문자열을 TTS하여 스피커로 출력합니다."""
-        # print("받은 문자", text)
-        tts = gTTS(text=text, lang="ko")
-        tts.save("resources/text_to_speech.mp3")
-
-        pygame.mixer.init()
-        pygame.mixer.music.load("resources/text_to_speech.mp3")
-        pygame.mixer.music.play()
-        while pygame.mixer.music.get_busy():
-            pygame.time.Clock().tick(10)
 
 
 class TextProcessing(QThread):
