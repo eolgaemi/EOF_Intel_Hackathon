@@ -1,11 +1,11 @@
 # 파이썬 가상환경 폴더는 깃 업로드 제외 @권강현
-EOF_DESKTOP/.desktop_venv/*
-EOF_RaspberryPi4/.rp4_venv/*
+EOF_DESKTOP/.desktop_venv/
+EOF_RaspberryPi4/.rp4_venv/
 EOF_DESKTOP/resources/api_tokens.ini
 EOF_DESKTOP/resources/received_audio.wav
 EOF_DESKTOP/resources/text_to_speech.mp3
-EOF_DESKTOP/resources/bge-large-en-v1.5/*
-EOF_DESKTOP/resources/Llama-2-7b-hf/*
+EOF_DESKTOP/resources/bge-large-en-v1.5/
+EOF_DESKTOP/resources/Llama-2-7b-hf/
 
 
 # Created by https://www.toptal.com/developers/gitignore/api/venv,jupyternotebooks

@@ -1,0 +1,55 @@
+# 파이썬 가상환경 이름은 .server_venv로 할 것
+# (.gitignore에 EOF_THRASH_SERVER/.server_venv/*를 등록함)
+
+# python --verison 3.10.12
+# -U pip
+
+# GUI 출력에 필요한 라이브러리
+PyQt5==5.15.10
+
+# 모델 추론에 필요한 라이브러리
+
+openvino==2023.0.0
+openvino-model-api==0.1.8
+otx==1.4.4
+numpy>=1.21.0,<=1.23.5  # np.bool was removed in 1.24.0 which was used in openvino runtime
+# torch==2.1.2
+# torchvision==0.16.2
+nncf==2.6.0
+onnx==1.13.0
+
+
+# llama2 API 버전에 필요한 라이브러리
+pypdf==3.17.4
+faiss-gpu==1.7.2
+replicate==0.22.0
+langchain==0.1.0
+sentence_transformers==2.2.2
+unstructured==0.11.8
+
+# Speech To Text: OpenAI whisper
+openai-whisper==20231117
+
+# 언어 번역에 사용되는 라이브러리
+googletrans-python==0.2.0
+
+# tts관련
+pygame==2.5.2
+gTTS==2.5.0
+
+# requirements.txt 설치 후 
+# opencv-python-headless==4.8.1.78 를 수동으로 설치하면 QT가 열릴 것이다.
+
+
+# local로 llama2를 돌릴 때 필요한 라이브러리
+# langchain==0.1.0
+# pypdf==3.17.4
+# sentence-transformers==2.2.2
+# torch>=2.0.1
+# faiss-gpu==1.7.2
+transformers>=4.34.1
+accelerate==0.26.1
+bitsandbytes==0.42.0
+
+# 녹음관련
+PyAudio==0.2.14
