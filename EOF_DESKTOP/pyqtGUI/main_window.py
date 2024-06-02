@@ -49,7 +49,11 @@ class MainGUI(QMainWindow):
         print(2)
         self.init_ui()
         self.lane_logstash_host = "127.0.0.1"
-        self.lane_logstash_port = "9901"
+        self.lane_logstash_port = 9901
+        self.bottle_logstash_host = '127.0.0.1'
+        self.bottle_logstash_port = 9900
+        self.lane_start_time = None
+        self.lane_stop_time = None
 
     def init_basic_instance(self):
         """프로그램 동작에 필요한 기본 인스턴스를 초기화 합니다."""
@@ -179,8 +183,8 @@ class MainGUI(QMainWindow):
             self.frame_refresh_timer.start(30)  # 30ms 마다 콜백 실행 (33 fps)
             self.activated = self.launch_control.activate()
 
-            if self.activated == True:
-                self.lane_start_time = datetime.now().isoformat()
+            if self.activated is True:
+                self.lane_start_time = datetime.now()
 
         except Exception as e:
             print_err(f"Failed to activate {str_lane_num}")
@@ -222,10 +226,10 @@ class MainGUI(QMainWindow):
 
             self.activated = False
 
-            if self.activated == False:
+            if self.activated is False:
                 self.lane_stop_time = datetime.now()
-                log_entry = self.create_log_message(self.lane_start_time,self.lane_stop_time,str_lane_num)
-                self.send_log_to_logstash(log_entry)
+                log_entry = self.create_lane_log_message(self.lane_start_time,self.lane_stop_time,str_lane_num)
+                self.send_lane_log_to_logstash(log_entry)
 
 
 
@@ -286,19 +290,29 @@ class MainGUI(QMainWindow):
         current_time = time.localtime()
         hour = current_time.tm_hour
         minute = current_time.tm_min
-        second = current_time.tm_sec
+        second = current_time.tm_sec        
 
         # Clear Bottle
         if result == 0:
             print("CLEAR BOTTLE 결과 전송")
             added_text = f"분류결과: CLEAR {hour}시 {minute}분 {second}초"
             self.update_log_text(added_text)
+            if self.detector.current_target == "pet":
+                log_entry = self.create_bottle_log_message('PET', 'CLEAR')
+            else:
+                log_entry = self.create_bottle_log_message('GLASS', 'CLEAR')
+            self.send_bottle_log_to_logstash(log_entry)
         # Label Bottle
         elif result == 1:
             print("LABEL BOTTLE 결과 전송")
             self.hw_control_comm.send(message="Servo Kick")
             added_text = f"분류결과: LABEL {hour}시 {minute}분 {second}초"
             self.update_log_text(added_text)
+            if self.detector.current_target == "pet":
+                log_entry = self.create_bottle_log_message('PET', 'LABEL')
+            else:
+                log_entry = self.create_bottle_log_message('GLASS', 'LABEL')
+            self.send_bottle_log_to_logstash(log_entry)
 
     def change_model(self):
         """페트병, 유리병 모델을 스위칭 합니다."""
@@ -414,12 +428,11 @@ class MainGUI(QMainWindow):
         self.audio_recv_thread.wait()
         event.accept()
 
-<<<<<<< HEAD
-    def send_log_to_logstash(self,log_entry):
+    def send_lane_log_to_logstash(self,log_entry):
         try:
             # Logstash TCP 소켓 연결
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            sock.connect((self.lane_logstash_host, self.lanelogstash_port))
+            sock.connect((self.lane_logstash_host, self.lane_logstash_port))
 
             # 로그 전송
             sock.sendall(log_entry.encode('utf-8'))
@@ -428,10 +441,10 @@ class MainGUI(QMainWindow):
         except Exception as e:
             print(f"Error while sending log to Logstash: {e}")
 
-    def create_log_message(self,timestamp_start,timestamp_stop,lane_num):
-        timestamp = timestamp_stop.date()
+    def create_lane_log_message(self,timestamp_start,timestamp_stop,lane_num):
+        lane_timestamp = timestamp_stop.date()
 
-        timestamp = datetime.combine(timestamp,datetime.min.time()).isoformat()
+        lane_timestamp = datetime.combine(lane_timestamp,datetime.min.time()).isoformat()
 
         logger_name = lane_num+'_UPTIME_LOG'
         level = 'INFO'
@@ -439,10 +452,39 @@ class MainGUI(QMainWindow):
         stop_time = timestamp_stop.isoformat()
         up_time = (timestamp_stop - timestamp_start).seconds
 
-        log_entry = f'TIME:{timestamp}  NAME:{logger_name}  LEVEL:{level}  START:{start_time}  STOP:{stop_time}  UPTIME:{up_time}'
+        log_entry = f'TIME:{lane_timestamp}  NAME:{logger_name}  LEVEL:{level}  START:{start_time}  STOP:{stop_time}  UPTIME:{up_time}'
+        return log_entry
+    
+    def send_bottle_log_to_logstash(self,log_entry):
+        try:
+            # Logstash TCP 소켓 연결
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            sock.connect((self.bottle_logstash_host, self.bottle_logstash_port))
+
+            # 로그 전송
+            sock.sendall(log_entry.encode('utf-8'))
+            sock.close()
+        except Exception as e:
+            print(f"Error while sending log to Logstash: {e}")
+
+    def create_bottle_log_message(self,pet_or_glass,label_or_clear):
+        
+        logger_name = pet_or_glass + '_LOG'
+        level = 'INFO'
+        log_message = label_or_clear
+
+        bottle_timestamp = datetime.now()
+
+        # 초 단위까지만 포함된 문자열로 변환
+        bottle_timestamp = bottle_timestamp.strftime('%Y-%m-%d %H:%M:%S')
+
+        # 문자열을 다시 datetime 객체로 변환
+        bottle_timestamp = datetime.strptime(bottle_timestamp, '%Y-%m-%d %H:%M:%S').isoformat()
+
+        log_entry = f'TIME:{bottle_timestamp}  NAME:{logger_name}  LEVEL:{level}  RESULT:{log_message}'
 
         return log_entry
-=======
+    
     def speak(self, text):
         """서버로부터 받은 문자열을 TTS하여 스피커로 출력합니다."""
         # print("받은 문자", text)
@@ -454,4 +496,3 @@ class MainGUI(QMainWindow):
         pygame.mixer.music.play()
         while pygame.mixer.music.get_busy():
             pygame.time.Clock().tick(10)
->>>>>>> 42dedaf (bug fix: 녹음 후 통신소켓 죽는문제)
